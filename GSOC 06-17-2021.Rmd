@@ -1,0 +1,300 @@
+---
+title: "GSOC"
+author: "Ajay Dugar"
+date: "2/21/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+library(ggplot2)
+library(data.table)
+```
+
+# Completed Stuff
+
+## From https://amstat.tandfonline.com/doi/pdf/10.1080/01621459.1987.10478445?needAccess=true
+### This is Dan Carr's original paper for binning algorithm in Fortran
+
+```{r, eval = T}
+hex = function(x, y, n = length(x), xmin = min(x), 
+               xmax = max(x), ymin = min(y), 
+               ymax = max(y), pct_of_plot_used = 90, 
+               binning_relation = 2){
+  # Inputs: n (legnth), x and y (data vectors), 
+  # size (scaling parameter < IDIM), 
+  # binning (scaling of the hexagons with 
+  # respect to the amount of points contained)
+  # Inputs?: xmin, xmax, ymin, ymax are data extremes
+  # Outputs: nl (length), xl and yl 
+  # (lattice centers), counts (nonzero counts, nl <= n)
+  
+  # Binning relation is the norm-relationship between the relative size of the hexagons and the number of points they contain
+  
+  if(length(x) != length(y)){
+    stop("x and y data must be the same length")
+  }
+  
+  
+  # Inputs
+  size = pct_of_plot_used
+  n = length(x)
+  counts = rep(0, n)
+  xl = rep(0, n)
+  yl = rep(0, n)
+  
+  #Lattice Dimensions
+  IDIM = 100
+  JDIM = floor(IDIM/sqrt(3)+1)
+  
+
+  lat1 = matrix(data = 0, nrow = IDIM, ncol = JDIM)
+  lat2 = matrix(data = 0, nrow = IDIM, ncol = JDIM)
+  
+  # Scaling constants
+  xr = xmax - xmin
+  yr = ymax - ymin
+  c1 = size/xr
+  c2 = size/(xr*sqrt(3))
+  c3 = 1/c1
+  c4 = 1/c2
+  
+  # Binning
+  for (k in 1:n){
+    sx = c1*(x[k] - xmin)
+    sy = c2*(y[k] - ymin)
+    i1 = floor(sx + 0.5)
+    j1 = floor(sy + 0.5)
+    i2 = floor(sx)
+    j2 = floor(sy)
+    if (((sx-i1)^2 + 3*(sy-j1)^2) < ((sx-i2-0.5)^2 + 3*(sy-j2-0.5)^2)){
+      lat1[i1, j1] = lat1[i1, j1]+1
+    }
+    else{
+      lat2[i2, j2] = lat2[i2, j2]+1
+    }
+  }
+  
+  # Write Lattice Points and Counts
+  
+  imax = floor(size+1)
+  jmax = floor(size/sqrt(3)+1)
+  nl = 0
+  
+  for(j in 1:jmax){
+    for(i in 1:imax){
+      if(lat1[i, j] > 0){
+        nl = nl + 1
+        xl[nl] = c3*i + xmin
+        yl[nl] = c4*j + ymin
+        counts[nl] = lat1[i, j]
+      }
+    }
+    for(i in 1:imax){
+      if(lat2[i, j] > 0){
+        nl = nl+1
+        xl[nl] = c3*(i+0.5) + xmin
+        yl[nl] = c4*(j+0.5) + ymin
+        counts[nl] = lat2[i, j]
+      }
+    }
+  }
+  max_circumradius = 0.5*xr/size
+  counts2 = counts[counts != 0]
+  
+  if (binning_relation != 0){
+    radii = (counts2/max(counts2))^(1/binning_relation)*max_circumradius
+  }
+  else{
+    radii = rep(max_circumradius, length(counts2))
+  }
+  
+  lt = list(xl = xl[counts != 0], yl = yl[counts != 0], counts = counts2, 
+            radii =  radii
+  )
+  
+  return(lt)
+}
+```
+
+```{r}
+set.seed(2021)
+x = rnorm(100000)
+y = rnorm(100000)
+x2 = 20*x
+y2 = 20*y
+hexagon = hex(x = x, y = y, pct_of_plot_used = 20, binning_relation = 0)
+```
+
+# Scratch Work
+
+```{r}
+hex = function(x, y, xmin = min(x), xmax = max(x), ymin = min(y), ymax = max(y), pct_of_plot_used = 20, binning_relation = 0.5, lattice = TRUE, plotted = TRUE){
+  # Inputs: n (legnth), x and y (data vectors), 
+  # pct_of_plot_used (scaling parameter < IDIM), 
+  # binning_relation (scaling of the hexagons with 
+  # respect to the amount of points contained)
+  # binning_relation = 2 means that the areas of
+  # the hexagons are proportional to the number of
+  # points that they contain
+  #
+  # Inputs: xmin, xmax, ymin, ymax are data extremes
+  # Outputs: nl (length), xl and yl 
+  # (lattice centers), counts (nonzero counts, nl <= n)
+  
+
+  # Binning relation is the norm-relationship between the relative size of the hexagons and the number of points they contain
+
+  
+  if(length(x) != length(y)){
+    stop("x and y data must be the same length")
+  }
+  
+  
+  # Inputs
+  size = pct_of_plot_used
+  n = length(x)
+  counts = rep(0, n)
+  xl = rep(0, n)
+  yl = rep(0, n)
+  
+  #Lattice Dimensions
+  IDIM = 100
+  JDIM = floor(IDIM/sqrt(3)+1)
+  
+
+  lat1 = matrix(data = 0, nrow = IDIM, ncol = JDIM)
+  lat2 = matrix(data = 0, nrow = IDIM, ncol = JDIM)
+  
+  # Scaling constants
+  xr = xmax - xmin
+  yr = ymax - ymin
+  c1 = size/xr
+  c2 = size/(xr*sqrt(3))
+  c3 = 1/c1
+  c4 = 1/c2
+  
+  # Binning
+  for (k in 1:n){
+    sx = c1*(x[k] - xmin)
+    sy = c2*(y[k] - ymin)
+    i1 = floor(sx + 0.5)
+    j1 = floor(sy + 0.5)
+    i2 = floor(sx)
+    j2 = floor(sy)
+    if (((sx-i1)^2 + 3*(sy-j1)^2) < ((sx-i2-0.5)^2 + 3*(sy - j2 - 0.5)^2)){
+      lat1[i1, j1] = lat1[i1, j1] + 1
+    }
+    else{
+      lat2[i2, j2] = lat2[i2, j2] + 1
+      
+    }
+  }
+  
+  # Write Lattice Points and Counts
+  
+  imax = floor(size)
+  jmax = floor(size/sqrt(3))
+  nl = 0
+  
+  for(j in 1:jmax){
+    for(i in 1:imax){
+      if(lat1[i, j] > 0){
+        nl = nl + 1
+        xl[nl] = c3*i + xmin
+        yl[nl] = c4*j + ymin
+        counts[nl] = lat1[i, j]
+      }
+    }
+    for(i in 1:imax){
+      if(lat2[i, j] > 0){
+        nl = nl+1
+        xl[nl] = c3*(i+0.5) + xmin
+        yl[nl] = c4*(j+0.5) + ymin
+        counts[nl] = lat2[i, j]
+      }
+    }
+  }
+  max_circumradius = 0.5*xr/size
+  counts2 = counts[counts != 0]
+  
+  if (binning_relation >= 0){
+    radii = (counts2/max(counts2))^(binning_relation)*max_circumradius
+  }
+  else{
+    stop("binning_relation must be non-negative")
+  }
+  
+  lt = list(xl = xl[counts != 0], yl = yl[counts != 0], counts = counts2, 
+            radii =  radii
+  )
+  
+poly = c()
+
+  for (i in 1:length(lt$xl)){
+    
+    centerx = lt$xl[i]
+    centery = lt$yl[i]
+    radius = lt$radii[i]
+    
+    poly_hex <- data.table( x=c(centerx, centerx - sqrt(3)*radius/2, centerx - sqrt(3)*radius/2, centerx , centerx + sqrt(3)*radius/2, centerx + sqrt(3)*radius/2 ), y=c(centery + radius,  centery + 1/2*radius, centery - 1/2*radius, centery-radius , centery - 1/2*radius, centery + 1/2*radius ), 
+            fill = rep(lt$counts[i],6),
+            group = rep(i, 6) # This separates the hexagons
+    )
+  
+    poly = rbind(poly, poly_hex)
+    
+  }
+  # Setting color equal to fill will give the hexagons the same color for outline and fill
+  hexplot <- list(geom_polygon(data=poly, aes(x=x, y=y, fill = fill, group = group)))
+  
+  if(lattice & plotted){
+    return(list(lt, hexplot))
+  }
+  else if (lattice){
+    return(list(lt, NULL))
+  }
+  else if (plotted){
+    return(list(NULL, hexplot))
+  }
+  
+}
+
+
+```
+
+
+```{r}
+data(iris)
+#x=iris$Sepal.Length
+#y=iris$Petal.Length
+x = rnorm(10000)
+y = rnorm(10000)
+asdf <- hex(x=x, y=y, plotted = TRUE, lattice = TRUE, binning_relation = 0.5)
+```
+
+
+```{r}
+# Here is the plot, which you can add ggplot2 functionality on top of, including a regression line, and labels
+lin_reg <- lm(y~x, data.table(x,y))
+ggplot() + asdf[[2]] + ggtitle("iris Data") + xlab("Sepal Length") + ylab("Petal Length") + geom_abline(slope = lin_reg$coefficients[2], intercept = lin_reg$coefficients[1]) + coord_fixed()
+```
+
+We can create the fill gradient outside the hex() function.
+
+```{r}
+ggplot() + asdf[[2]] + ggtitle("iris Data") + xlab("Sepal Length") + ylab("Petal Length") + geom_abline(slope = lin_reg$coefficients[2], intercept = lin_reg$coefficients[1]) + coord_fixed() +scale_fill_gradient(low="blue", high="red") + scale_color_gradient(low="blue", high="red")
+```
+
+
+
+
+
+
+
+
+
+
+
+
