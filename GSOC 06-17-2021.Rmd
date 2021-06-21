@@ -24,8 +24,11 @@ hex = function(x, y, n = length(x), xmin = min(x),
                binning_relation = 2){
   # Inputs: n (legnth), x and y (data vectors), 
   # size (scaling parameter < IDIM), 
-  # binning (scaling of the hexagons with 
-  # respect to the amount of points contained)
+  # binning_relation allows scaling of the hexagons to provide a reasonable visual representation of the points
+  # binning_relation makes hexagon diameter proportional to (Npoints in Hexagon) ^ (binning_relation)
+  # 0 <= binning_relationship <= 1. When it is 0, all hexagons are equally sized, but the color gradient remains
+  # when binning relationhip = 0.5, hexagon area is proportional to (Npoints in Hexagon)
+  # when binning relationhip = 1,  hexagon width is proportional to (Npoints in Hexagon) 
   # Inputs?: xmin, xmax, ymin, ymax are data extremes
   # Outputs: nl (length), xl and yl 
   # (lattice centers), counts (nonzero counts, nl <= n)
