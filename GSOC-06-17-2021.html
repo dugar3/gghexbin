@@ -185,13 +185,14 @@ library(data.table)</code></pre>
                binning_relation = 2){
   # Inputs: n (legnth), x and y (data vectors), 
   # size (scaling parameter &lt; IDIM), 
-  # binning (scaling of the hexagons with 
-  # respect to the amount of points contained)
+  # binning_relation allows scaling of the hexagons to provide a reasonable visual representation of the points
+  # binning_relation makes hexagon diameter proportional to Npoints in Hexagon ^ (binning_relation)
   # Inputs?: xmin, xmax, ymin, ymax are data extremes
   # Outputs: nl (length), xl and yl 
   # (lattice centers), counts (nonzero counts, nl &lt;= n)
   
   # Binning relation is the norm-relationship between the relative size of the hexagons and the number of points they contain
+  # 
   
   if(length(x) != length(y)){
     stop(&quot;x and y data must be the same length&quot;)
