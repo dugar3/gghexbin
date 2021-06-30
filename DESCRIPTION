@@ -8,5 +8,6 @@ Maintainer: Ajay Dugar <ad5338@nyu.edu>
 Description: More details about what the package does. See
              <http://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file> for details on how to
              write this part.
+Depends: data.table, ggplot2
 License: GPL (>= 2)
 RoxygenNote: 7.1.1

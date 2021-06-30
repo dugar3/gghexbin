@@ -4,9 +4,13 @@
 #' @param y add details
 #'
 #' @return Something about what is returned using for example \code{x} and \code{y}
-#' @examples
-#' hex(1, 2)
 #' 
+#' @examples
+#' hex(x = seq(1:10), y = seq(1:10))
+#' 
+#' @rdname hex
+#' 
+#' @export hex
 
 hex = function(x, y, xmin = min(x), xmax = max(x), ymin = min(y), ymax = max(y), pct_of_plot_used = 20, binning_relation = 0.5, lattice = TRUE, plotted = TRUE){
   # Inputs: n (legnth), x and y (data vectors), 

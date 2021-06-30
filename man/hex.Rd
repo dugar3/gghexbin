@@ -29,6 +29,5 @@ Something about what is returned using for example \code{x} and \code{y}
 Something about what hex.R does
 }
 \examples{
-hex(1, 2)
-
+hex(x = seq(1:10), y = seq(1:10))
 }
