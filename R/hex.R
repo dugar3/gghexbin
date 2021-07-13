@@ -1,12 +1,33 @@
 #' Something about what hex.R does
 #' 
-#' @param x add details
-#' @param y add details
-#'
-#' @return Something about what is returned using for example \code{x} and \code{y}
+#' @param x independent variable
+#' @param y dependent variable
+#' @param xmin minimum value of x, default value is min(x)
+#' @param xmax maximum value of x, default value is max(x)
+#' @param ymin minimum value of y, default value is min(y)
+#' @param ymax maximum value of y, default value is max(y)
+#' @param pct_of_plot_used maximum value of y, default value is max(y)
+#' @param binning_relation a value between 0 and 1 that determines the relationship between count and hexagon area proportion. 
+#' A value of 0.5 means that area and count have a 1:1 ratio, A value of 0 means that all hexagons are the same size, regardless of count
+#' @param lattice logical that indicates whether the lattice information is returned
+#' @param plotted logical that indicates whether the ggproto information is returned
+#' 
+#' 
+#' 
+#' @return Returns lattice information, \code{lt}, that includes hexagons' circumcenter coordinates, radii, and counts; 
+#' Also returns ggproto object, \code{hexplot}, which contains all of the geom_poly() generated hexagons for plotting.
 #' 
 #' @examples
-#' hex(x = seq(1:10), y = seq(1:10))
+#' library(ggplot2)
+#' library(data.table)
+#' 
+#' data(iris)
+#' x=iris$Sepal.Length
+#' y=iris$Petal.Length
+#' 
+#' hex_object <- hex(x=x, y=y, plotted = TRUE, lattice = TRUE, binning_relation = 0.5)
+#' lin_reg <- lm(y~x, data.table(x,y))
+#' ggplot() + hex_object[[2]] + ggtitle("iris Data") + xlab("Sepal Length") + ylab("Petal Length") + geom_abline(slope = lin_reg$coefficients[2], intercept = lin_reg$coefficients[1]) + coord_fixed()  + guides(fill=guide_legend(title="Counts")) + scale_fill_gradient(low="green", high="red")
 #' 
 #' @rdname hex
 #' 
@@ -36,6 +57,11 @@ hex = function(x, y, xmin = min(x), xmax = max(x), ymin = min(y), ymax = max(y),
   
   # Inputs
   size = pct_of_plot_used
+  if (pct_of_plot_used < 0 & pct_of_plot_used > 100){
+    stop("pct_of_plot_used must be between 0 and 100 (inclusive)")
+  }
+  
+  
   n = length(x)
   counts = rep(0, n)
   xl = rep(0, n)

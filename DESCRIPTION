@@ -1,13 +1,17 @@
 Package: gghexbin
 Type: Package
-Title: What the Package Does Using Title Case
+Title: Hexagonally Binned Graphs using ggplot2
 Version: 1.0
 Date: 2021-06-27
 Author: Ajay Dugar
 Maintainer: Ajay Dugar <ad5338@nyu.edu>
-Description: More details about what the package does. See
-             <http://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file> for details on how to
-             write this part.
+Description: An R package to enable the creation of high quality hexagonally binned graphs
+that can exploit all of ggplot2’s functionality. A hexagonal grid is overlaid over the data, and
+the data points are to the closest hexagonal bin. Each bin is sized in proportion to the number of points
+that it contains, allowing tens, hundreds, or even thousands of points to be represented by a single bin, and
+allowing the observer to get an intuitive feel for the density of data points, while simultaneously allowing for
+additional visualizations (regression lines, groupings, text, etc.) to be seen clearly.
+
 Depends: data.table, ggplot2
 License: GPL (>= 2)
 RoxygenNote: 7.1.1
