@@ -5,7 +5,7 @@ Version: 1.0
 Date: 2021-06-27
 Author: Ajay Dugar
 Maintainer: Ajay Dugar <ad5338@nyu.edu>
-Description: TODO
+Description: Say something about the package.
 Depends: data.table, ggplot2
 License: GPL (>= 2)
 RoxygenNote: 7.1.1

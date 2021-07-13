@@ -12,7 +12,7 @@
 #' @param lattice logical that indicates whether the lattice information is returned
 #' @param plotted logical that indicates whether the ggproto information is returned
 #' 
-#' 
+#' @import data.table ggplot2
 #' 
 #' @return Returns lattice information, \code{lt}, that includes hexagons' circumcenter coordinates, radii, and counts; 
 #' Also returns ggproto object, \code{hexplot}, which contains all of the geom_poly() generated hexagons for plotting.
@@ -140,6 +140,7 @@ hex = function(x, y, xmin = min(x), xmax = max(x), ymin = min(y), ymax = max(y),
   
   poly = c()
   
+  fill <- group <- NULL # To get rid of R CMD check NOTEs - See option 2 here - https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   for (i in 1:length(lt$xl)){
     
     centerx = lt$xl[i]
