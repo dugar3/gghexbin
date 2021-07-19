@@ -1,0 +1,159 @@
+---
+title: "gghexbin"
+subtitle: "An R package to enable hexagonal binning capabilities with ggplot2 functionalities"
+author: "Ajay Dugar"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+knitr::opts_chunk$set(dev = 'pdf')
+```
+
+# Introduction
+
+Hexagonal binning allows large datasets to be effectively plotted and visualized. It prevents the overplotting associated with large numbers of data points, where individual points turn into a solid mass and the information conveyed via the visualization is almost completely lost. Hexagonal binning is particularly useful in finance on account of the size of the datasets associated with stock market studies (the U.S. stock market, for example has around 4,000 securities) , but is broadly applicable to other fields and contexts as well.
+
+The central idea underlying hexagonal binning is simple. A hexagonal grid is overlaid over the data, and the data points are to the closest hexagonal bin. Each bin is sized in proportion to the number of points that it contains, allowing tens, hundreds, or even thousands of points to be represented by a single bin, and allowing the observer to get an intuitive feel for the density of data points, while simultaneously allowing for additional visualizations (regression lines, groupings, text, etc.) to be seen clearly.
+
+Currently, hexbin plots are generated using the [$hexbin$](https://cran.r-project.org/web/packages/hexbin/index.html) package. However, this package has two major issues. It is built on top of $lattice$, which is rapidly being superseded by $ggplot2$. Also, the additional visualizations mentioned earlier are handled poorly or are non-existent, as $hexbin$ does not integrate well with other packages.
+
+The purpose of this project is to create a new package, $gghexbin$ to replace the existing $hexbin$ package and which integrates well with $ggplot2$, which is perhaps the most powerful and widely used R visualization package for R. We expect that $gghexbin$ will display improved performance and also allow for widespread use in a variety of fields.
+
+# Methodology Background
+
+The current hexagonal binning capabilities in $ggplot2$ are rudimentary (they use the functions geom_hex() and geom_count()). In geom_hex(), all the hexagonal bins are the same size and don't change size to reflect the local density of points. Although geom_count() does allow for point sizes to vary with the number of points, it does not offer the full functionality of a hexbin plot. 
+
+The functionality we desire looks similar to [this image](https://github.com/peterccarl/gsoc-images/raw/main/beta%2086%2003.png) or the example given by the sample code later in this proposal. We will use of Dan Carr's hexbinning algorithm that was introduced in Carr et. al (1987) to create the new hexbin plots. 
+
+Understanding the differences between large and small dataset analysis requires the usage of density exploration. Specifically, for scatterplot-type visualizations, there is a need to use density representations for large datasets. If the goal is unambiguous interpretation and ease of comparison without loss of granularity, hexbins are appropriate. Consider the downsides of other representations. Using a simple scatterplot doesn't work due to the substantial overplotting. Color scaling doesn't allow many levels to be distinguished, and the interpretation is dependent on the contrast between colors, which can be arbitrarily chosen. Contour plots aren't suitable for comparisons and lose the granularity of the data. The need for a better method is clearly required.
+
+Our goals for plotting scatterplot data are:
+1) Prevent/minimize overplotting of the data
+2) Maintaining the granularity of individual points
+3) Bin in such a way as to be clear and concise visually
+
+So we would ideally like a binning method that would give a tessellation of the $\mathbb{R}^2$ plane. This gives the possibility of 3 regular polygons, the regular tilings of the Euclidean plane, the hexagon, triangle, and the square. From Scott (1985), the bias reduction between using hexagons versus squares is approximately 4%. Additionally, the human-preferred visual directions (up/down, left/right) are emphasized using squares and triangles, which can induce a bias in our perception of the binned data, causing us to see vertical and horizontal stripes when there are none. The hexagon seems far less prone to this problem, and is the natural choice of shape. 
+
+Both perceptual accuracy and density resolution are vital to hexagon symbol scaling. The usage of area as a stand-in for density is both clear visually and mathematically faithful to the data, as we can control this scaling using the inputs to the graphical functions. In this manner, both density anomalies and outlier points can be easily identified, conveying both idiosyncratic and aggregate behavior, something not easily done by other graphical methods.
+
+Carr et. al (1987)'s algorithm for hexagonal binning is straightforward, but gives an elegant solution to this problem. Since we have hexagonal binning, the lattice we will generate will also be hexagonal, like so:
+
+```{r, echo = F}
+library(ggplot2)
+x = c(1, 0.5, -0.5, -1, -0.5, 0.5, 0)
+y = c(0, -sqrt(3)/2, -sqrt(3)/2, 0, sqrt(3)/2, sqrt(3)/2, 0)
+ggplot(data = data.frame(x, y), aes(x = x, y = y)) + 
+  geom_point(size = 3, color = "blue") + coord_equal()
+```
+
+If we take such a lattice, and attempt to bin the data points to this, we will encounter an issue, namely that the y-coordinates of the lattice are $\sqrt3$ times farther apart than the x-coordinates:
+
+```{r, echo = F}
+x1 = c(1, -1, 0)
+y1 = c(0,  0, 0)
+x2 = c(0.5, -0.5, -0.5, 0.5)
+y2 = c(-sqrt(3)/2, -sqrt(3)/2,sqrt(3)/2, sqrt(3)/2)
+ggplot(data = expand.grid(x1, y1), aes(x = Var1, y = Var2, colour = "red", size = 3)) + 
+  geom_point(data = expand.grid(x2, y2), 
+             aes(x = Var1, y = Var2, colour = "blue"), size = 3) + 
+  geom_point(size = 3) + 
+  coord_fixed(ratio = 1) + 
+  theme(legend.position = "none") + xlab("x") + ylab("y")
+```
+
+We see that this rectangle, with vertices in red, has width $1$ and height $\sqrt3$. In order to ensure that there isn't any introduced bias into the sampling, we will scale the y-coordinates by $\frac{1}{\sqrt{3}}$, giving a lattice like so:
+
+```{r, echo = F}
+x1 = c(1, -1, 0)
+y1 = c(0,  0, 0)/sqrt(3)
+x2 = c(0.5, -0.5, -0.5, 0.5)
+y2 = c(-sqrt(3)/2, -sqrt(3)/2,sqrt(3)/2, sqrt(3)/2)/sqrt(3)
+ggplot(data = expand.grid(x1, y1), aes(x = Var1, y = Var2, colour = "red", size = 3)) + 
+  geom_point(data = expand.grid(x2, y2), 
+             aes(x = Var1, y = Var2, colour = "blue"), size = 3) + 
+  geom_point(size = 3) + 
+  coord_fixed(ratio = 1) + 
+  theme(legend.position = "none") + xlab("x") + ylab("y")
+```
+
+This means that this scaled hexagonal lattice is the same as generating two offset square lattices, one in red and one in blue. If we take a hexagonal lattice with dimensions of $100 \times100$, after scaling, we get a lattice of $100 \times \lfloor\frac{100}{\sqrt3}+1\rfloor = 100 \times 58$:
+
+```{r, echo = F}
+
+x1 = seq(0, 100, by = 1)
+x2 = seq(0.5, 100.5, by= 1)
+y1 = seq(0, 58, by = 1)
+y2 = seq(0.5, 58.5, by= 1)
+
+ggplot(data = expand.grid(x1, y1), 
+       aes(x = Var1, y = Var2, colour = "red", size = 0.0001)) + 
+  geom_point(data = expand.grid(x2, y2), 
+             aes(x = Var1, y = Var2, colour = "blue"), size = 0.0001) + 
+  geom_point(size = 0.0001) + 
+  coord_fixed(ratio = 1) + 
+  theme(legend.position = "none") + xlab("") + ylab("")
+```
+
+Zooming in to a subsection of this grid, with a hypothetical data point in green, we get this:
+
+```{r, echo = F}
+x1 = seq(0, 1, by = 1)
+x2 = seq(0.5, 1.5, by= 1)
+y1 = seq(0, 1, by = 1)
+y2 = seq(0.5, 1.5, by= 1)
+x3 = c(0.75)
+y3 = c(0.9)
+
+ggplot(data = expand.grid(x1, y1), 
+       aes(x = Var1, y = Var2, colour = "red", size = 3)) + 
+  geom_point(data = expand.grid(x2, y2), 
+             aes(x = Var1, y = Var2, colour = "blue"), size = 3) + 
+  geom_point(data = expand.grid(x3, y3), 
+             aes(x = Var1, y = Var2, colour = "green"), size = 3) + 
+  geom_point(size = 3) + 
+  coord_fixed(ratio = 1) + 
+  theme(legend.position = "none") + xlab("") + ylab("")
+```
+
+First, the algorithm loops over all of the data points and scales them, using the range of their $x$ and $y$ values to give both an $x$ and $y$ quantile. Since the lattices are ordered via coordinates, a simple comparison is done to identify the closest point for the two lattices to the data point:
+
+```{r, echo = F}
+x1 = seq(0, 1, by = 1)
+x2 = seq(0.5, 1.5, by= 1)
+y1 = seq(0, 1, by = 1)
+y2 = seq(0.5, 1.5, by= 1)
+x3 = c(0.75)
+y3 = c(0.9)
+
+ggplot(data = expand.grid(x1, y1), 
+       aes(x = Var1, y = Var2, colour = "red", size = 3)) + 
+  geom_point(data = expand.grid(x2, y2), 
+             aes(x = Var1, y = Var2, colour = "blue"), size = 3) + 
+  geom_point(data = expand.grid(x3, y3), 
+             aes(x = Var1, y = Var2, colour = "green"), size = 3) +
+  geom_point(size = 3) + 
+  coord_fixed(ratio = 1) + 
+  theme(legend.position = "none") + xlab("") + ylab("") + 
+  annotate("path", x=1+0.05*cos(seq(0,2*pi,length.out=100)), 
+           y=1+0.05*sin(seq(0,2*pi,length.out=100)), colour = "black") + 
+  annotate("path", x=0.5+0.05*cos(seq(0,2*pi,length.out=100)), 
+           y=0.5+0.05*sin(seq(0,2*pi,length.out=100)), colour = "black")
+```
+
+Next, a simple computation of the $\ell^2$-norm of the distance of the data point to the two candidate points gives us:
+
+$$(S_X - I_1)^2 + 3(S_Y - J_1)^2 < (S_X - I_2 - .5)^2 + 3(S_Y - J_2 - .5)^2$$
+
+where $(S_X, S_Y)$ is the scaled data point, $(I_1, J_1)$ and $(I_2, J_2)$ are the points of the two different lattices. The scaling factor  of $3$ comes from the undoing of the scaling of the y coordinates. It is here, where the speed of this algorithm is shown. In this single comparison, the algorithm finds the closest lattice point, and selects which of the two lattices the data point should belong to. After the assignment of each dataset point to it's closest lattice point, we simply take a count of the number of data points assigned to each lattice point. The function then returns the lattice points along with their associated count. The circumradius of maximum size of the hexagons for the grid is then computed based on the range of the original data set. We can then introduce a scaling parameter for the size of the hexagons to incorporate the "count" information for each lattice point.
+
+Finally, let us dive deeper into the current $hexbin$ and $lattice$ packages to analyze their shortcomings. $hexbin$'s main function is $hexbin()$, which takes input data to create a "hexbin" object that doesn't readily interact with $ggplot2$ functions and objects. This means that there are a large number of redundant functions that are not needed when we use $ggplot2$, and the hexbin functionality can be implemented far more simply. 
+
+# Example

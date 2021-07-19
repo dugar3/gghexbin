@@ -20,13 +20,13 @@
 #' y=iris$Petal.Length
 #' 
 #' lin_reg <- lm(y~x, data.table(x,y))
-#' ggplot() + hex(x, y, pct_of_plot_used = 20, binning_relation = 0.5) + ggtitle("iris Data") + xlab("Sepal Length") + ylab("Petal Length") + geom_abline(slope = lin_reg$coefficients[2], intercept = lin_reg$coefficients[1]) + coord_fixed()  + guides(fill=guide_legend(title="Counts")) + scale_fill_gradient(low="green", high="red")
+#' ggplot() + gghex(x, y, pct_of_plot_used = 20, binning_relation = 0.5) + ggtitle("iris Data") + xlab("Sepal Length") + ylab("Petal Length") + geom_abline(slope = lin_reg$coefficients[2], intercept = lin_reg$coefficients[1]) + coord_fixed()  + guides(fill=guide_legend(title="Counts")) + scale_fill_gradient(low="green", high="red")
 #' 
 #' @rdname hex
 #' 
 #' @export hex
 
-hex = function(x, y, pct_of_plot_used = 20, binning_relation = 0.5){
+gghex = function(x, y, pct_of_plot_used = 20, binning_relation = 0.5){
   # Inputs: x and y (data vectors), 
   # pct_of_plot_used (scaling parameter < IDIM), 
   # binning_relation (scaling of the hexagons with 
