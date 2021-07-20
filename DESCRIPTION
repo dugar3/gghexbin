@@ -9,3 +9,7 @@ Description: Say something about the package.
 Depends: data.table, ggplot2
 License: GPL (>= 2)
 RoxygenNote: 7.1.1
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr

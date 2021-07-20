@@ -14,7 +14,6 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-knitr::opts_chunk$set(dev = 'pdf')
 ```
 
 # Introduction
@@ -84,22 +83,22 @@ ggplot(data = expand.grid(x1, y1), aes(x = Var1, y = Var2, colour = "red", size 
   theme(legend.position = "none") + xlab("x") + ylab("y")
 ```
 
-This means that this scaled hexagonal lattice is the same as generating two offset square lattices, one in red and one in blue. If we take a hexagonal lattice with dimensions of $100 \times100$, after scaling, we get a lattice of $100 \times \lfloor\frac{100}{\sqrt3}+1\rfloor = 100 \times 58$:
+This means that this scaled hexagonal lattice is the same as generating two offset square lattices, one in red and one in blue. If we take a hexagonal lattice with dimensions of $100 \times100$, after scaling, we get a lattice of $100 \times \lfloor\frac{100}{\sqrt3}+1\rfloor = 100 \times 58$. A subset of this lattice is shown below:
 
-```{r, echo = F}
+```{r, echo = F, message = F, warning=F}
 
-x1 = seq(0, 100, by = 1)
-x2 = seq(0.5, 100.5, by= 1)
-y1 = seq(0, 58, by = 1)
-y2 = seq(0.5, 58.5, by= 1)
+x1 = seq(0, 5, by = 1)
+x2 = seq(0.5, 5.5, by= 1)
+y1 = seq(0, 5, by = 1)
+y2 = seq(0.5, 5.5, by= 1)
 
 ggplot(data = expand.grid(x1, y1), 
-       aes(x = Var1, y = Var2, colour = "red", size = 0.0001)) + 
+       aes(x = Var1, y = Var2, colour = "red", size = 1)) + 
   geom_point(data = expand.grid(x2, y2), 
-             aes(x = Var1, y = Var2, colour = "blue"), size = 0.0001) + 
-  geom_point(size = 0.0001) + 
+             aes(x = Var1, y = Var2, colour = "blue"), size = 1) + 
+  geom_point(size = 1) + 
   coord_fixed(ratio = 1) + 
-  theme(legend.position = "none") + xlab("") + ylab("")
+  theme(legend.position = "none") + xlab("") + ylab("") + xlim(0, 5) + ylim(0, 5)
 ```
 
 Zooming in to a subsection of this grid, with a hypothetical data point in green, we get this:
@@ -157,3 +156,21 @@ where $(S_X, S_Y)$ is the scaled data point, $(I_1, J_1)$ and $(I_2, J_2)$ are t
 Finally, let us dive deeper into the current $hexbin$ and $lattice$ packages to analyze their shortcomings. $hexbin$'s main function is $hexbin()$, which takes input data to create a "hexbin" object that doesn't readily interact with $ggplot2$ functions and objects. This means that there are a large number of redundant functions that are not needed when we use $ggplot2$, and the hexbin functionality can be implemented far more simply. 
 
 # Example
+
+```{r}
+require(devtools)
+install_github("dugar3/gghexbin")
+require(gghexbin)
+library(ggplot2)
+library(data.table)
+```
+
+```{r}
+data(iris)
+x=iris$Sepal.Length
+y=iris$Petal.Length
+
+lin_reg <- lm(y~x, data.table(x,y))
+ggplot() + gghex(x, y) + ggtitle("iris Data") + xlab("Sepal Length") + ylab("Petal Length") + geom_abline(slope = lin_reg$coefficients[2], intercept = lin_reg$coefficients[1]) + coord_fixed()  + guides(fill=guide_legend(title="Counts")) + scale_fill_gradient(low="green", high="red")
+```
+
