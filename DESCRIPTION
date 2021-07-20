@@ -11,5 +11,6 @@ License: GPL (>= 2)
 RoxygenNote: 7.1.1
 Suggests: 
     rmarkdown,
-    knitr
+    knitr,
+    markdown
 VignetteBuilder: knitr
