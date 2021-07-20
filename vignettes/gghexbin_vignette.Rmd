@@ -158,9 +158,9 @@ Finally, let us dive deeper into the current $hexbin$ and $lattice$ packages to 
 # Example
 
 ```{r}
-require(devtools)
-install_github("dugar3/gghexbin")
-require(gghexbin)
+# library(devtools)
+# install_github("dugar3/gghexbin")
+library(gghexbin)
 library(ggplot2)
 library(data.table)
 ```
@@ -171,6 +171,6 @@ x=iris$Sepal.Length
 y=iris$Petal.Length
 
 lin_reg <- lm(y~x, data.table(x,y))
-ggplot() + gghex(x, y) + ggtitle("iris Data") + xlab("Sepal Length") + ylab("Petal Length") + geom_abline(slope = lin_reg$coefficients[2], intercept = lin_reg$coefficients[1]) + coord_fixed()  + guides(fill=guide_legend(title="Counts")) + scale_fill_gradient(low="green", high="red")
+ggplot() + gghexbin::gghex(x, y) + ggtitle("iris Data") + xlab("Sepal Length") + ylab("Petal Length") + geom_abline(slope = lin_reg$coefficients[2], intercept = lin_reg$coefficients[1]) + coord_fixed()  + guides(fill=guide_legend(title="Counts")) + scale_fill_gradient(low="green", high="red")
 ```
 

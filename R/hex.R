@@ -24,7 +24,7 @@
 #' 
 #' @rdname hex
 #' 
-#' @export hex
+#' @export gghex
 
 gghex = function(x, y, pct_of_plot_used = 20, binning_relation = 0.5){
   # Inputs: x and y (data vectors), 
