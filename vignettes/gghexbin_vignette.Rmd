@@ -158,8 +158,8 @@ Finally, let us dive deeper into the current $hexbin$ and $lattice$ packages to 
 # Example
 
 ```{r}
-# library(devtools)
-# install_github("dugar3/gghexbin")
+library(devtools)
+install_github("dugar3/gghexbin")
 library(gghexbin)
 library(ggplot2)
 library(data.table)
